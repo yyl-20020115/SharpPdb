@@ -1,135 +1,134 @@
-﻿
+﻿using SharpPdb.Windows.Utility;
 
-namespace SharpPdb.Windows.SymbolRecords
+namespace SharpPdb.Windows.SymbolRecords;
+
+/// <summary>
+/// This record is used to specify any piece of code that exists outside a procedure. It is followed by
+/// an End record.The thunk  record is intended for small code fragments and a two byte length
+/// field is sufficient for its intended purpose.
+/// </summary>
+public class Thunk32Symbol : SymbolRecord
 {
     /// <summary>
-    /// This record is used to specify any piece of code that exists outside a procedure. It is followed by
-    /// an End record.The thunk  record is intended for small code fragments and a two byte length
-    /// field is sufficient for its intended purpose.
+    /// Array of <see cref="SymbolRecordKind"/> that this class can read.
     /// </summary>
-    public class Thunk32Symbol : SymbolRecord
+    public static readonly SymbolRecordKind[] Kinds = new SymbolRecordKind[]
     {
-        /// <summary>
-        /// Array of <see cref="SymbolRecordKind"/> that this class can read.
-        /// </summary>
-        public static readonly SymbolRecordKind[] Kinds = new SymbolRecordKind[]
+        SymbolRecordKind.S_THUNK32
+    };
+
+    /// <summary>
+    /// Used in local procedures, global procedures, thunk start, with start, and
+    /// block start symbols. If the scope is not enclosed by another lexical scope,
+    /// then <see cref="ParentOffset"/> is zero. Otherwise, the parent of this scope is the symbol
+    /// within this module that opens the outer scope that encloses this scope but
+    /// encloses no other scope that encloses this scope. The <see cref="ParentOffset"/> field contains
+    /// the offset from the beginning of the module's symbol table of the symbol
+    /// that opens the enclosing lexical scope.
+    /// </summary>
+    public uint ParentOffset { get; private set; }
+
+    /// <summary>
+    /// Used in start search local procedures, global procedures, and thunk start
+    /// symbols. The <see cref="Next"/> field, along with the start search symbol, defines a
+    /// group of lexically scoped symbols within a symbol table that is contained
+    /// within a code segment or PE section. For each segment or section
+    /// represented in the symbol table, there is a start search symbol that contains
+    /// the offset from the start of the symbols for this module to the first procedure
+    /// or thunk contained in the segment. Each outermost lexical scope symbol
+    /// has a next field containing the next outermost scope symbol contained in the
+    /// segment. The last outermost scope in the symbol table for each segment has
+    /// a next field of zero.
+    /// </summary>
+    public uint End { get; private set; }
+
+    /// <summary>
+    /// This field is defined for local procedures, global procedures, thunk, block,
+    /// and with symbols.The end field contains the offset from the start of the
+    /// symbols for this module to the matching block end symbol that terminates
+    /// the lexical scope.
+    /// </summary>
+    public uint Next { get; private set; }
+
+    /// <summary>
+    /// Gets the offset portion of the thunk address.
+    /// </summary>
+    public uint Offset { get; private set; }
+
+    /// <summary>
+    /// Gets the segment portion of the thunk address.
+    /// </summary>
+    public ushort Segment { get; private set; }
+
+    /// <summary>
+    /// Gets the length in bytes of this thunk.
+    /// </summary>
+    public ushort Length { get; private set; }
+
+    /// <summary>
+    /// Gets the ordinal specifying the type of thunk.
+    /// </summary>
+    public ThunkOrdinal Ordinal { get; private set; }
+
+    /// <summary>
+    /// Gets the name of thunk.
+    /// </summary>
+    public StringReference Name;
+
+    /// <summary>
+    /// Variant field, depending on value of <see cref="Ordinal"/>. If
+    /// <see cref="Ordinal"/> is <see cref="ThunkOrdinal.Standard"/>, there is no variant field. If
+    /// <see cref="Ordinal"/> is <see cref="ThunkOrdinal.ThisAdjustor"/>, the variant field is a two-byte
+    /// signed value specifying the delta to be added to the <c>this</c> pointer, followed by the
+    /// length-prefixed name of the target function. If <see cref="Ordinal"/> is <see cref="ThunkOrdinal.VirtualCall"/>,
+    /// then the variant field is a two-byte signed displacement into the virtual table. If <see cref="Ordinal"/>
+    /// is <see cref="ThunkOrdinal.PCode"/>, the variant is the segment:offset of the pcode entry point.
+    /// </summary>
+    public byte[] VariantData { get; private set; }
+
+    /// <summary>
+    /// Reads <see cref="Thunk32Symbol"/> from the stream.
+    /// </summary>
+    /// <param name="reader">Stream binary reader.</param>
+    /// <param name="symbolStream">Symbol stream that contains this symbol record.</param>
+    /// <param name="symbolStreamIndex">Index in symbol stream <see cref="SymbolStream.References"/> array.</param>
+    /// <param name="kind">Symbol record kind.</param>
+    /// <param name="dataLength">Record data length.</param>
+    public static Thunk32Symbol Read(IBinaryReader reader, SymbolStream symbolStream, int symbolStreamIndex, SymbolRecordKind kind, uint dataLength)
+    {
+        long start = reader.Position;
+        return new Thunk32Symbol
         {
-            SymbolRecordKind.S_THUNK32
+            SymbolStream = symbolStream,
+            SymbolStreamIndex = symbolStreamIndex,
+            Kind = kind,
+            ParentOffset = reader.ReadUint(),
+            End = reader.ReadUint(),
+            Next = reader.ReadUint(),
+            Offset = reader.ReadUint(),
+            Segment = reader.ReadUshort(),
+            Length = reader.ReadUshort(),
+            Ordinal = (ThunkOrdinal)reader.ReadByte(),
+            Name = reader.ReadCString(),
+            VariantData = reader.ReadByteArray((int)(dataLength - (reader.Position - start))),
         };
+    }
 
-        /// <summary>
-        /// Used in local procedures, global procedures, thunk start, with start, and
-        /// block start symbols. If the scope is not enclosed by another lexical scope,
-        /// then <see cref="ParentOffset"/> is zero. Otherwise, the parent of this scope is the symbol
-        /// within this module that opens the outer scope that encloses this scope but
-        /// encloses no other scope that encloses this scope. The <see cref="ParentOffset"/> field contains
-        /// the offset from the beginning of the module's symbol table of the symbol
-        /// that opens the enclosing lexical scope.
-        /// </summary>
-        public uint ParentOffset { get; private set; }
+    /// <summary>
+    /// Gets end position of the children subrecords.
+    /// </summary>
+    /// <returns>Position in the binary stream.</returns>
+    protected override long GetChildrenEndPosition()
+    {
+        return End;
+    }
 
-        /// <summary>
-        /// Used in start search local procedures, global procedures, and thunk start
-        /// symbols. The <see cref="Next"/> field, along with the start search symbol, defines a
-        /// group of lexically scoped symbols within a symbol table that is contained
-        /// within a code segment or PE section. For each segment or section
-        /// represented in the symbol table, there is a start search symbol that contains
-        /// the offset from the start of the symbols for this module to the first procedure
-        /// or thunk contained in the segment. Each outermost lexical scope symbol
-        /// has a next field containing the next outermost scope symbol contained in the
-        /// segment. The last outermost scope in the symbol table for each segment has
-        /// a next field of zero.
-        /// </summary>
-        public uint End { get; private set; }
-
-        /// <summary>
-        /// This field is defined for local procedures, global procedures, thunk, block,
-        /// and with symbols.The end field contains the offset from the start of the
-        /// symbols for this module to the matching block end symbol that terminates
-        /// the lexical scope.
-        /// </summary>
-        public uint Next { get; private set; }
-
-        /// <summary>
-        /// Gets the offset portion of the thunk address.
-        /// </summary>
-        public uint Offset { get; private set; }
-
-        /// <summary>
-        /// Gets the segment portion of the thunk address.
-        /// </summary>
-        public ushort Segment { get; private set; }
-
-        /// <summary>
-        /// Gets the length in bytes of this thunk.
-        /// </summary>
-        public ushort Length { get; private set; }
-
-        /// <summary>
-        /// Gets the ordinal specifying the type of thunk.
-        /// </summary>
-        public ThunkOrdinal Ordinal { get; private set; }
-
-        /// <summary>
-        /// Gets the name of thunk.
-        /// </summary>
-        public StringReference Name;
-
-        /// <summary>
-        /// Variant field, depending on value of <see cref="Ordinal"/>. If
-        /// <see cref="Ordinal"/> is <see cref="ThunkOrdinal.Standard"/>, there is no variant field. If
-        /// <see cref="Ordinal"/> is <see cref="ThunkOrdinal.ThisAdjustor"/>, the variant field is a two-byte
-        /// signed value specifying the delta to be added to the <c>this</c> pointer, followed by the
-        /// length-prefixed name of the target function. If <see cref="Ordinal"/> is <see cref="ThunkOrdinal.VirtualCall"/>,
-        /// then the variant field is a two-byte signed displacement into the virtual table. If <see cref="Ordinal"/>
-        /// is <see cref="ThunkOrdinal.PCode"/>, the variant is the segment:offset of the pcode entry point.
-        /// </summary>
-        public byte[] VariantData { get; private set; }
-
-        /// <summary>
-        /// Reads <see cref="Thunk32Symbol"/> from the stream.
-        /// </summary>
-        /// <param name="reader">Stream binary reader.</param>
-        /// <param name="symbolStream">Symbol stream that contains this symbol record.</param>
-        /// <param name="symbolStreamIndex">Index in symbol stream <see cref="SymbolStream.References"/> array.</param>
-        /// <param name="kind">Symbol record kind.</param>
-        /// <param name="dataLength">Record data length.</param>
-        public static Thunk32Symbol Read(IBinaryReader reader, SymbolStream symbolStream, int symbolStreamIndex, SymbolRecordKind kind, uint dataLength)
-        {
-            long start = reader.Position;
-            return new Thunk32Symbol
-            {
-                SymbolStream = symbolStream,
-                SymbolStreamIndex = symbolStreamIndex,
-                Kind = kind,
-                ParentOffset = reader.ReadUint(),
-                End = reader.ReadUint(),
-                Next = reader.ReadUint(),
-                Offset = reader.ReadUint(),
-                Segment = reader.ReadUshort(),
-                Length = reader.ReadUshort(),
-                Ordinal = (ThunkOrdinal)reader.ReadByte(),
-                Name = reader.ReadCString(),
-                VariantData = reader.ReadByteArray((int)(dataLength - (reader.Position - start))),
-            };
-        }
-
-        /// <summary>
-        /// Gets end position of the children subrecords.
-        /// </summary>
-        /// <returns>Position in the binary stream.</returns>
-        protected override long GetChildrenEndPosition()
-        {
-            return End;
-        }
-
-        /// <summary>
-        /// Gets the position in the symbol stream of the parent symbol record.
-        /// </summary>
-        /// <returns>Position in the symbol stream of the parent symbol record.</returns>
-        protected override long GetParentPosition()
-        {
-            return ParentOffset;
-        }
+    /// <summary>
+    /// Gets the position in the symbol stream of the parent symbol record.
+    /// </summary>
+    /// <returns>Position in the symbol stream of the parent symbol record.</returns>
+    protected override long GetParentPosition()
+    {
+        return ParentOffset;
     }
 }

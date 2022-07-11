@@ -1,62 +1,61 @@
-﻿
+﻿using SharpPdb.Windows.Utility;
 
-namespace SharpPdb.Windows.SymbolRecords
+namespace SharpPdb.Windows.SymbolRecords;
+
+/// <summary>
+/// These symbols are used for data declared with the thread storage attribute that is not exported
+/// from a module. In C and C++, thread symbols that are declared static are emitted as Local
+/// Thread Storage 16:32 symbols. Symbols that are emitted as Local Thread Storage 16:32 cannot
+/// be moved by the CVPACK utility into the global symbol table for the executable file.
+/// </summary>
+public class ThreadLocalDataSymbol : SymbolRecord
 {
     /// <summary>
-    /// These symbols are used for data declared with the thread storage attribute that is not exported
-    /// from a module. In C and C++, thread symbols that are declared static are emitted as Local
-    /// Thread Storage 16:32 symbols. Symbols that are emitted as Local Thread Storage 16:32 cannot
-    /// be moved by the CVPACK utility into the global symbol table for the executable file.
+    /// Array of <see cref="SymbolRecordKind"/> that this class can read.
     /// </summary>
-    public class ThreadLocalDataSymbol : SymbolRecord
+    public static readonly SymbolRecordKind[] Kinds = new SymbolRecordKind[]
     {
-        /// <summary>
-        /// Array of <see cref="SymbolRecordKind"/> that this class can read.
-        /// </summary>
-        public static readonly SymbolRecordKind[] Kinds = new SymbolRecordKind[]
+        SymbolRecordKind.S_LTHREAD32, SymbolRecordKind.S_GTHREAD32
+    };
+
+    /// <summary>
+    /// Gets the symbol type.
+    /// </summary>
+    public TypeIndex Type { get; private set; }
+
+    /// <summary>
+    /// Gets the offset into thread local storage.
+    /// </summary>
+    public uint Offset { get; private set; }
+
+    /// <summary>
+    /// Gets the segment of thread local storage.
+    /// </summary>
+    public ushort Segment { get; private set; }
+
+    /// <summary>
+    /// Gets the data symbol name.
+    /// </summary>
+    public StringReference Name;
+
+    /// <summary>
+    /// Reads <see cref="ThreadLocalDataSymbol"/> from the stream.
+    /// </summary>
+    /// <param name="reader">Stream binary reader.</param>
+    /// <param name="symbolStream">Symbol stream that contains this symbol record.</param>
+    /// <param name="symbolStreamIndex">Index in symbol stream <see cref="SymbolStream.References"/> array.</param>
+    /// <param name="kind">Symbol record kind.</param>
+    public static ThreadLocalDataSymbol Read(IBinaryReader reader, SymbolStream symbolStream, int symbolStreamIndex, SymbolRecordKind kind)
+    {
+        return new ThreadLocalDataSymbol
         {
-            SymbolRecordKind.S_LTHREAD32, SymbolRecordKind.S_GTHREAD32
+            SymbolStream = symbolStream,
+            SymbolStreamIndex = symbolStreamIndex,
+            Kind = kind,
+            Type = TypeIndex.Read(reader),
+            Offset = reader.ReadUint(),
+            Segment = reader.ReadUshort(),
+            Name = reader.ReadCString(),
         };
-
-        /// <summary>
-        /// Gets the symbol type.
-        /// </summary>
-        public TypeIndex Type { get; private set; }
-
-        /// <summary>
-        /// Gets the offset into thread local storage.
-        /// </summary>
-        public uint Offset { get; private set; }
-
-        /// <summary>
-        /// Gets the segment of thread local storage.
-        /// </summary>
-        public ushort Segment { get; private set; }
-
-        /// <summary>
-        /// Gets the data symbol name.
-        /// </summary>
-        public StringReference Name;
-
-        /// <summary>
-        /// Reads <see cref="ThreadLocalDataSymbol"/> from the stream.
-        /// </summary>
-        /// <param name="reader">Stream binary reader.</param>
-        /// <param name="symbolStream">Symbol stream that contains this symbol record.</param>
-        /// <param name="symbolStreamIndex">Index in symbol stream <see cref="SymbolStream.References"/> array.</param>
-        /// <param name="kind">Symbol record kind.</param>
-        public static ThreadLocalDataSymbol Read(IBinaryReader reader, SymbolStream symbolStream, int symbolStreamIndex, SymbolRecordKind kind)
-        {
-            return new ThreadLocalDataSymbol
-            {
-                SymbolStream = symbolStream,
-                SymbolStreamIndex = symbolStreamIndex,
-                Kind = kind,
-                Type = TypeIndex.Read(reader),
-                Offset = reader.ReadUint(),
-                Segment = reader.ReadUshort(),
-                Name = reader.ReadCString(),
-            };
-        }
     }
 }

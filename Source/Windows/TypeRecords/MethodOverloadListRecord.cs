@@ -1,4 +1,5 @@
 ﻿
+using SharpPdb.Windows.Utility;
 using System.Collections.Generic;
 
 namespace SharpPdb.Windows.TypeRecords

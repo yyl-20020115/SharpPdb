@@ -1,67 +1,66 @@
 ﻿using System;
 
-namespace SharpPdb.Windows.SymbolRecords
+namespace SharpPdb.Windows.SymbolRecords;
+
+/// <summary>
+/// Represents local variable flags.
+/// </summary>
+[Flags]
+public enum LocalVariableFlags : ushort
 {
     /// <summary>
-    /// Represents local variable flags.
+    /// Variable is a parameter.
     /// </summary>
-    [Flags]
-    public enum LocalVariableFlags : ushort
-    {
-        /// <summary>
-        /// Variable is a parameter.
-        /// </summary>
-        IsParam = 0x0001,
+    IsParam = 0x0001,
 
-        /// <summary>
-        /// Address is taken
-        /// </summary>
-        IsAddressTaken = 0x0002,
+    /// <summary>
+    /// Address is taken
+    /// </summary>
+    IsAddressTaken = 0x0002,
 
-        /// <summary>
-        /// Variable is compiler generated
-        /// </summary>
-        IsCompilerGenerated = 0x0004,
+    /// <summary>
+    /// Variable is compiler generated
+    /// </summary>
+    IsCompilerGenerated = 0x0004,
 
-        /// <summary>
-        /// The symbol is splitted in temporaries, which are treated by compiler as
-        /// independent entities.
-        /// </summary>
-        IsAggregate = 0x0008,
+    /// <summary>
+    /// The symbol is splitted in temporaries, which are treated by compiler as
+    /// independent entities.
+    /// </summary>
+    IsAggregate = 0x0008,
 
-        /// <summary>
-        /// Counterpart of <see cref="IsAggregate"/> - tells that it is a part of a <see cref="IsAggregate"/> symbol.
-        /// </summary>
-        IsAggregated = 0x0010,
+    /// <summary>
+    /// Counterpart of <see cref="IsAggregate"/> - tells that it is a part of a <see cref="IsAggregate"/> symbol.
+    /// </summary>
+    IsAggregated = 0x0010,
 
-        /// <summary>
-        /// Variable has multiple simultaneous lifetimes
-        /// </summary>
-        IsAliased = 0x0020,
+    /// <summary>
+    /// Variable has multiple simultaneous lifetimes
+    /// </summary>
+    IsAliased = 0x0020,
 
-        /// <summary>
-        /// Represents one of the multiple simultaneous lifetimes
-        /// </summary>
-        IsAlias = 0x0040,
+    /// <summary>
+    /// Represents one of the multiple simultaneous lifetimes
+    /// </summary>
+    IsAlias = 0x0040,
 
-        /// <summary>
-        /// Variable is return value.
-        /// </summary>
-        IsReturnValue = 0x0080,
+    /// <summary>
+    /// Variable is return value.
+    /// </summary>
+    IsReturnValue = 0x0080,
 
-        /// <summary>
-        /// Variable is optimized away.
-        /// </summary>
-        IsOptimizedOut = 0x0100,
+    /// <summary>
+    /// Variable is optimized away.
+    /// </summary>
+    IsOptimizedOut = 0x0100,
 
-        /// <summary>
-        /// Variable is enregistered global.
-        /// </summary>
-        IsEnregisteredGlobal = 0x0200,
+    /// <summary>
+    /// Variable is enregistered global.
+    /// </summary>
+    IsEnregisteredGlobal = 0x0200,
 
-        /// <summary>
-        /// Variable is enregistered static.
-        /// </summary>
-        IsEnregisteredStatic = 0x0400,
-    }
+    /// <summary>
+    /// Variable is enregistered static.
+    /// </summary>
+    IsEnregisteredStatic = 0x0400,
 }

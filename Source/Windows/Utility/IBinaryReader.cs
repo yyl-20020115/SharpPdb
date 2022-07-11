@@ -16,8 +16,7 @@ public interface IBinaryReader
     int ReadInt();
     byte ReadByte();
     void Align(int v);
-    IBinaryReader ReadSubstream(int hashLength);
-    IBinaryReader ReadSubstream(uint hashLength);
+    IBinaryReader ReadSubstream(long hashLength);
     void Move(ushort dataLen);
     IBinaryReader Duplicate();
     short ReadShort();

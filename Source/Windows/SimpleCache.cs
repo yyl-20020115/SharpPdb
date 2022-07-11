@@ -14,24 +14,14 @@ namespace SharpPdb.Windows
         {
             throw new NotImplementedException();
         }
-        internal static SimpleCacheWithContext<string[], DbiModuleDescriptor> CreateWithContext(DbiModuleDescriptor dbiModuleDescriptor, Func<DbiModuleDescriptor, string[]> callEnumerateFiles)
+        internal static SimpleCacheWithContext<T1, T2> CreateWithContext<T1,T2>(T1 dbiModuleDescriptor, Func<T1, T2> callEnumerateFiles)
+        {
+            throw new NotImplementedException();
+        }
+        internal static SimpleCacheWithContext<T1, T2[]> CreateWithContext<T1, T2>(T1 dbiModuleDescriptor, Func<T1, T2[]> callEnumerateFiles)
         {
             throw new NotImplementedException();
         }
 
-        internal static SimpleCacheWithContext<PdbStream, DbiModuleDescriptor> CreateWithContext(DbiModuleDescriptor dbiModuleDescriptor, Func<DbiModuleDescriptor, PdbStream> callEnumerateModuleStream)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static SimpleCacheWithContext<SymbolStream, DbiModuleDescriptor> CreateWithContext(DbiModuleDescriptor dbiModuleDescriptor, Func<DbiModuleDescriptor, SymbolStream> callEnumerateLocalSymbolStream)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static SimpleCacheWithContext<DebugSubsectionStream, DbiModuleDescriptor> CreateWithContext(DbiModuleDescriptor dbiModuleDescriptor, Func<DbiModuleDescriptor, DebugSubsectionStream> callEnumerateDebugSubsectionStream)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
