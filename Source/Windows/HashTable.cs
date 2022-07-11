@@ -1,5 +1,4 @@
 ﻿using SharpPdb.Windows.Utility;
-using SharpUtilities;
 using System;
 using System.Collections.Generic;
 
@@ -77,7 +76,13 @@ namespace SharpPdb.Windows
         /// <summary>
         /// Converts hash table to .NET dictionary.
         /// </summary>
-        public Dictionary<uint, uint> Dictionary => dictionaryCache.Value;
+        public Dictionary<uint, uint> Dictionary
+        {
+            get
+            {
+                return dictionaryCache.Value;
+            }
+        }
 
         /// <summary>
         /// Computes hash of the specified string.

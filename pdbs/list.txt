@@ -1,0 +1,7 @@
+1 - NativeDumpTest.x64.pdb (dumps3)
+2 - SharedLibrary.pdb (CLR x64 Windows dumps3)
+3 - LocalVariables.pdb (CLR x64 Windows dumps3)
+4 - SharedLibrary.pdb (CLR Linux dumps3)
+5 - NativeDumpTest.x86.pdb (dumps3)
+6 - Cpp17.x64.pdb (dumps3)
+7 - clr.pdb (http://msdl.microsoft.com/download/symbols/clr.pdb/9FF14BF5D36043909E88FF823F35EE3B2/clr.pdb)

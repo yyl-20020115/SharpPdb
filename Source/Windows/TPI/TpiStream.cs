@@ -1,5 +1,4 @@
 ﻿using SharpPdb.Windows.TypeRecords;
-using SharpUtilities;
 using System;
 using System.Collections.Generic;
 
@@ -110,7 +109,7 @@ namespace SharpPdb.Windows.TPI
                 throw new Exception("TPI Stream Invalid number of hash buckets.");
 
             // The actual type records themselves come from this stream
-            TypeRecordsSubStream = Stream.Reader.ReadSubstream(Header.TypeRecordBytes);
+            TypeRecordsSubStream = Stream.Reader.ReadSubstream((byte)Header.TypeRecordBytes);
             typeRecordsSubStreamPerThread = new System.Threading.ThreadLocal<IBinaryReader>(() => TypeRecordsSubStream.Duplicate());
 
             IBinaryReader reader = TypeRecordsSubStream;

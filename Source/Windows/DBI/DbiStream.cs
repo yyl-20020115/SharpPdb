@@ -1,6 +1,4 @@
-﻿using SharpPdb.Windows.Utility;
-using SharpUtilities;
-using System;
+﻿using System;
 
 namespace SharpPdb.Windows.DBI
 {

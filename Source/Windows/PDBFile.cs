@@ -4,7 +4,6 @@ using SharpPdb.Windows.MSF;
 using SharpPdb.Windows.PIS;
 using SharpPdb.Windows.TPI;
 using SharpPdb.Windows.Utility;
-using SharpUtilities;
 using System;
 using System.Collections.Generic;
 

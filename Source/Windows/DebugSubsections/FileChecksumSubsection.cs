@@ -1,6 +1,4 @@
-﻿using SharpUtilities;
-
-namespace SharpPdb.Windows.DebugSubsections
+﻿namespace SharpPdb.Windows.DebugSubsections
 {
     /// <summary>
     /// Represents parsed CV_FileCheckSum structure.

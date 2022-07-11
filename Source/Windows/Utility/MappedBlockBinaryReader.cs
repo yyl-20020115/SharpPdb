@@ -1,6 +1,4 @@
-﻿using SharpUtilities;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace SharpPdb.Windows.Utility
@@ -102,6 +100,12 @@ namespace SharpPdb.Windows.Utility
                 }
             }
         }
+
+        int IBinaryReader.Length => throw new System.NotImplementedException();
+
+        uint IBinaryReader.Position { get; set; }
+
+        int IBinaryReader.BytesRemaining => throw new System.NotImplementedException();
 
         /// <summary>
         /// Creates duplicate of this stream.
@@ -300,7 +304,7 @@ namespace SharpPdb.Windows.Utility
             }
 
             MemoryBuffer buffer = new MemoryBuffer(bytes.ToArray());
-            return new StringReference(buffer, StringReference.Encoding.UTF8);
+            return new StringReference(buffer, Encoding.UTF8);
         }
 
         /// <summary>
@@ -352,7 +356,7 @@ namespace SharpPdb.Windows.Utility
             }
 
             MemoryBuffer buffer = new MemoryBuffer(bytes.ToArray());
-            return new StringReference(buffer, StringReference.Encoding.Unicode);
+            return new StringReference(buffer, StringReference.Encoding);
         }
 
         /// <summary>
@@ -435,6 +439,26 @@ namespace SharpPdb.Windows.Utility
                 return BaseReader.ReadBuffer(length);
             }
             return new MemoryBuffer(this.ReadByteArray((int)length));
+        }
+
+        public byte[] ReadByteArray(int v)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void Align(int v)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public IBinaryReader ReadSubstream(byte hashLength)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void Move(ushort dataLen)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
