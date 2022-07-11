@@ -1,4 +1,6 @@
 ﻿
+using SharpPdb.Windows;
+using SharpPdb.Windows.Utility;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;

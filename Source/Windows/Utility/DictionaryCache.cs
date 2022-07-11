@@ -17,5 +17,9 @@ public class DictionaryCache<T1, T2>
         {
             return default(T2);
         }
+        set
+        {
+
+        }
     }
 }

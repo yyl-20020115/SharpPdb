@@ -1,4 +1,5 @@
 ﻿
+using SharpPdb.Windows;
 using System.Reflection.Metadata;
 
 namespace SharpPdb.Managed.Portable

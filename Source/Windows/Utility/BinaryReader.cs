@@ -30,6 +30,11 @@ public class BinaryReader : IBinaryReader
         throw new NotImplementedException();
     }
 
+    public byte[] ReadAllBytes()
+    {
+        throw new NotImplementedException();
+    }
+
     public object ReadBString()
     {
         throw new NotImplementedException();

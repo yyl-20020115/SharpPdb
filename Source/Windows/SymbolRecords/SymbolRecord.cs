@@ -39,7 +39,7 @@ public class SymbolRecord
     public SymbolRecord()
     {
         parentCache = SimpleCache.CreateWithContext(this, getParentDelegate);
-        childrenCache = SimpleCache.CreateWithContext(this, getChildrenDelegate);
+        childrenCache = SimpleCache.CreateWithContext2(this, getChildrenDelegate);
     }
 
     /// <summary>

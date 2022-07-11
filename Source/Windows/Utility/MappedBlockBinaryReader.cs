@@ -511,4 +511,9 @@ public class MappedBlockBinaryReader : IBinaryReader
     {
         throw new NotImplementedException();
     }
+
+    public byte[] ReadAllBytes()
+    {
+        throw new NotImplementedException();
+    }
 }

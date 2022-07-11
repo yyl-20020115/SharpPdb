@@ -1,4 +1,8 @@
-﻿namespace SharpPdb.Common.Tests;
+﻿using System;
+using System.IO;
+using System.Reflection;
+
+namespace SharpPdb.Common.Tests;
 
 public class TestBase
 {

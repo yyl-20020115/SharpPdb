@@ -30,7 +30,7 @@ namespace SharpPdb.Native.Types
             : base(pdb, typeIndex, modifierOptions, string.Empty, 0)
         {
             MemberFunctionRecord = memberFuctionRecord;
-            argumentsCache = SimpleCache.CreateWithContext(this, CallEnumerateArguments);
+            argumentsCache = SimpleCache.CreateWithContext2(this, CallEnumerateArguments);
         }
 
         /// <summary>

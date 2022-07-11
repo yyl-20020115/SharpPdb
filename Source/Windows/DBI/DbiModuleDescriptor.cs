@@ -43,7 +43,7 @@ public class DbiModuleDescriptor
     public DbiModuleDescriptor(IBinaryReader reader, DbiModuleList moduleList)
     {
         ModuleList = moduleList;
-        filesCache = SimpleCache.CreateWithContext(this, CallEnumerateFiles);
+        filesCache = SimpleCache.CreateWithContext2(this, CallEnumerateFiles);
         Header = ModuleInfoHeader.Read(reader);
         ModuleName = reader.ReadCString();
         ObjectFileName = reader.ReadCString();

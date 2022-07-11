@@ -11,10 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit" Version="2.4.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="$(EnlistmentRoot)Source\SharpPdb\SharpPdb.csproj" />
     <ProjectReference Include="$(EnlistmentRoot)Source\Windows\SharpPdb.Windows.csproj" />
   </ItemGroup>

@@ -1,5 +1,7 @@
 ﻿
 
+using SharpPdb.Windows;
+
 namespace SharpPdb.Managed
 {
     /// <summary>

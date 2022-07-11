@@ -35,4 +35,5 @@ public interface IBinaryReader
     ushort[] ReadUshortArray(int modulesCount);
     IBinaryReader ReadSubstream();
     Guid ReadGuid();
+    byte[] ReadAllBytes();
 }

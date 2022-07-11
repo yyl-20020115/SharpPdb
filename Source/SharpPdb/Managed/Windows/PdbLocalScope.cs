@@ -1,4 +1,5 @@
-﻿using SharpPdb.Windows.SymbolRecords;
+﻿using SharpPdb.Windows;
+using SharpPdb.Windows.SymbolRecords;
 
 using System.Collections.Generic;
 using System.Linq;

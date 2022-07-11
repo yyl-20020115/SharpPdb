@@ -2,7 +2,7 @@
 using SharpPdb.Windows;
 using SharpPdb.Windows.SymbolRecords;
 using SharpPdb.Windows.TypeRecords;
-
+using SharpPdb.Windows.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;

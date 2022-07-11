@@ -1,4 +1,5 @@
-﻿using SharpPdb.Windows.DBI;
+﻿using SharpPdb.Windows;
+using SharpPdb.Windows.DBI;
 using SharpPdb.Windows.DebugSubsections;
 using SharpPdb.Windows.SymbolRecords;
 
