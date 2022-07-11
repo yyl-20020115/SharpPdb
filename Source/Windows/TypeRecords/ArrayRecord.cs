@@ -2,56 +2,55 @@
 
 using System;
 
-namespace SharpPdb.Windows.TypeRecords
+namespace SharpPdb.Windows.TypeRecords;
+
+/// <summary>
+/// Represents array type record.
+/// </summary>
+public class ArrayRecord : TypeRecord
 {
     /// <summary>
-    /// Represents array type record.
+    /// Array of <see cref="TypeLeafKind"/> that this class can read.
     /// </summary>
-    public class ArrayRecord : TypeRecord
+    public static readonly TypeLeafKind[] Kinds = new TypeLeafKind[]
     {
-        /// <summary>
-        /// Array of <see cref="TypeLeafKind"/> that this class can read.
-        /// </summary>
-        public static readonly TypeLeafKind[] Kinds = new TypeLeafKind[]
+        TypeLeafKind.LF_ARRAY
+    };
+
+    /// <summary>
+    /// Gets the type index of each array element.
+    /// </summary>
+    public TypeIndex ElementType { get; private set; }
+
+    /// <summary>
+    /// Gets the type index of indexing variable.
+    /// </summary>
+    public TypeIndex IndexType { get; private set; }
+
+    /// <summary>
+    /// Gets the length of array in bytes.
+    /// </summary>
+    public ulong Size { get; private set; }
+
+    /// <summary>
+    /// Gets the array name.
+    /// </summary>
+    public StringReference Name;
+
+    /// <summary>
+    /// Reads <see cref="ArrayRecord"/> from the stream.
+    /// </summary>
+    /// <param name="reader">Stream binary reader.</param>
+    /// <param name="kind">Type record kind.</param>
+    public static ArrayRecord Read(IBinaryReader reader, TypeLeafKind kind)
+    {
+        return new ArrayRecord
         {
-            TypeLeafKind.LF_ARRAY
+            Kind = kind,
+            ElementType = TypeIndex.Read(reader),
+            IndexType = TypeIndex.Read(reader),
+            Size = Convert.ToUInt64(reader.ReadEncodedConstant()),
+            Name = reader.ReadCString(),
         };
-
-        /// <summary>
-        /// Gets the type index of each array element.
-        /// </summary>
-        public TypeIndex ElementType { get; private set; }
-
-        /// <summary>
-        /// Gets the type index of indexing variable.
-        /// </summary>
-        public TypeIndex IndexType { get; private set; }
-
-        /// <summary>
-        /// Gets the length of array in bytes.
-        /// </summary>
-        public ulong Size { get; private set; }
-
-        /// <summary>
-        /// Gets the array name.
-        /// </summary>
-        public StringReference Name;
-
-        /// <summary>
-        /// Reads <see cref="ArrayRecord"/> from the stream.
-        /// </summary>
-        /// <param name="reader">Stream binary reader.</param>
-        /// <param name="kind">Type record kind.</param>
-        public static ArrayRecord Read(IBinaryReader reader, TypeLeafKind kind)
-        {
-            return new ArrayRecord
-            {
-                Kind = kind,
-                ElementType = TypeIndex.Read(reader),
-                IndexType = TypeIndex.Read(reader),
-                Size = Convert.ToUInt64(reader.ReadEncodedConstant()),
-                Name = reader.ReadCString(),
-            };
-        }
     }
 }

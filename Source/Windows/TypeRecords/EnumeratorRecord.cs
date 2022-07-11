@@ -1,50 +1,48 @@
 ﻿using SharpPdb.Windows.Utility;
 
+namespace SharpPdb.Windows.TypeRecords;
 
-namespace SharpPdb.Windows.TypeRecords
+/// <summary>
+/// This type record specifies the name and value of an enumerate within an enumeration.
+/// </summary>
+public class EnumeratorRecord : TypeRecord
 {
     /// <summary>
-    /// This type record specifies the name and value of an enumerate within an enumeration.
+    /// Array of <see cref="TypeLeafKind"/> that this class can read.
     /// </summary>
-    public class EnumeratorRecord : TypeRecord
+    public static readonly TypeLeafKind[] Kinds = new TypeLeafKind[]
     {
-        /// <summary>
-        /// Array of <see cref="TypeLeafKind"/> that this class can read.
-        /// </summary>
-        public static readonly TypeLeafKind[] Kinds = new TypeLeafKind[]
+        TypeLeafKind.LF_ENUMERATE
+    };
+
+    /// <summary>
+    /// Gets the member attributes
+    /// </summary>
+    public MemberAttributes Attritubes { get; private set; }
+
+    /// <summary>
+    /// Gets the value of enumeration.
+    /// </summary>
+    public object Value { get; private set; }
+
+    /// <summary>
+    /// Gets the enumeration name.
+    /// </summary>
+    public StringReference Name;
+
+    /// <summary>
+    /// Reads <see cref="EnumeratorRecord"/> from the stream.
+    /// </summary>
+    /// <param name="reader">Stream binary reader.</param>
+    /// <param name="kind">Type record kind.</param>
+    public static EnumeratorRecord Read(IBinaryReader reader, TypeLeafKind kind)
+    {
+        return new EnumeratorRecord
         {
-            TypeLeafKind.LF_ENUMERATE
+            Kind = kind,
+            Attritubes = MemberAttributes.Read(reader),
+            Value = reader.ReadEncodedConstant(),
+            Name = reader.ReadCString(),
         };
-
-        /// <summary>
-        /// Gets the member attributes
-        /// </summary>
-        public MemberAttributes Attritubes { get; private set; }
-
-        /// <summary>
-        /// Gets the value of enumeration.
-        /// </summary>
-        public object Value { get; private set; }
-
-        /// <summary>
-        /// Gets the enumeration name.
-        /// </summary>
-        public StringReference Name;
-
-        /// <summary>
-        /// Reads <see cref="EnumeratorRecord"/> from the stream.
-        /// </summary>
-        /// <param name="reader">Stream binary reader.</param>
-        /// <param name="kind">Type record kind.</param>
-        public static EnumeratorRecord Read(IBinaryReader reader, TypeLeafKind kind)
-        {
-            return new EnumeratorRecord
-            {
-                Kind = kind,
-                Attritubes = MemberAttributes.Read(reader),
-                Value = reader.ReadEncodedConstant(),
-                Name = reader.ReadCString(),
-            };
-        }
     }
 }

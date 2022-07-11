@@ -1,23 +1,21 @@
 ﻿#pragma warning disable 1591
-
 using System;
 
-namespace SharpPdb.Windows.TypeRecords
+namespace SharpPdb.Windows.TypeRecords;
+
+/// <summary>
+/// Represents CV_fldattr_t bitfield.
+/// </summary>
+[Flags]
+public enum MethodOptions : ushort
 {
     /// <summary>
-    /// Represents CV_fldattr_t bitfield.
+    /// No method options.
     /// </summary>
-    [Flags]
-    public enum MethodOptions : ushort
-    {
-        /// <summary>
-        /// No method options.
-        /// </summary>
-        None = 0x0000,
-        Pseudo = 0x0020,
-        NoInherit = 0x0040,
-        NoConstruct = 0x0080,
-        CompilerGenerated = 0x0100,
-        Sealed = 0x0200
-    }
+    None = 0x0000,
+    Pseudo = 0x0020,
+    NoInherit = 0x0040,
+    NoConstruct = 0x0080,
+    CompilerGenerated = 0x0100,
+    Sealed = 0x0200
 }

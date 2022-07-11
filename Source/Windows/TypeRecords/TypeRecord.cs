@@ -1,13 +1,12 @@
-﻿namespace SharpPdb.Windows.TypeRecords
+﻿namespace SharpPdb.Windows.TypeRecords;
+
+/// <summary>
+/// Base class for all type record read from type info stream.
+/// </summary>
+public class TypeRecord
 {
     /// <summary>
-    /// Base class for all type record read from type info stream.
+    /// Gets the type record kind.
     /// </summary>
-    public class TypeRecord
-    {
-        /// <summary>
-        /// Gets the type record kind.
-        /// </summary>
-        public TypeLeafKind Kind { get; protected set; }
-    }
+    public TypeLeafKind Kind { get; protected set; }
 }

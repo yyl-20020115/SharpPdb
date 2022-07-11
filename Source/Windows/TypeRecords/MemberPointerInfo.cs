@@ -1,34 +1,33 @@
-﻿
+﻿using SharpPdb.Windows.Utility;
 
-namespace SharpPdb.Windows.TypeRecords
+namespace SharpPdb.Windows.TypeRecords;
+
+/// <summary>
+/// Does not correspond to any tag, this is the tail of an <see cref="PointerRecord"/>
+/// if it represents a member pointer.
+/// </summary>
+public class MemberPointerInfo
 {
     /// <summary>
-    /// Does not correspond to any tag, this is the tail of an <see cref="PointerRecord"/>
-    /// if it represents a member pointer.
+    /// Gets the type index of the containing class of the pointer.
     /// </summary>
-    public class MemberPointerInfo
+    public TypeIndex ContainingType { get; private set; }
+
+    /// <summary>
+    /// Gets the pointer to member representation.
+    /// </summary>
+    public PointerToMemberRepresentation Representation { get; private set; }
+
+    /// <summary>
+    /// Reads <see cref="MemberPointerInfo"/> from the stream.
+    /// </summary>
+    /// <param name="reader">Stream binary reader.</param>
+    public static MemberPointerInfo Read(IBinaryReader reader)
     {
-        /// <summary>
-        /// Gets the type index of the containing class of the pointer.
-        /// </summary>
-        public TypeIndex ContainingType { get; private set; }
-
-        /// <summary>
-        /// Gets the pointer to member representation.
-        /// </summary>
-        public PointerToMemberRepresentation Representation { get; private set; }
-
-        /// <summary>
-        /// Reads <see cref="MemberPointerInfo"/> from the stream.
-        /// </summary>
-        /// <param name="reader">Stream binary reader.</param>
-        public static MemberPointerInfo Read(IBinaryReader reader)
+        return new MemberPointerInfo
         {
-            return new MemberPointerInfo
-            {
-                ContainingType = TypeIndex.Read(reader),
-                Representation = (PointerToMemberRepresentation)reader.ReadUshort(),
-            };
-        }
+            ContainingType = TypeIndex.Read(reader),
+            Representation = (PointerToMemberRepresentation)reader.ReadUshort(),
+        };
     }
 }

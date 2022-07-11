@@ -1,45 +1,42 @@
-﻿
+﻿using SharpPdb.Windows.Utility;
 
-using SharpPdb.Windows.Utility;
+namespace SharpPdb.Windows.TypeRecords;
 
-namespace SharpPdb.Windows.TypeRecords
+/// <summary>
+/// Represents string id type record.
+/// </summary>
+public class StringIdRecord : TypeRecord
 {
     /// <summary>
-    /// Represents string id type record.
+    /// Array of <see cref="TypeLeafKind"/> that this class can read.
     /// </summary>
-    public class StringIdRecord : TypeRecord
+    public static readonly TypeLeafKind[] Kinds = new TypeLeafKind[]
     {
-        /// <summary>
-        /// Array of <see cref="TypeLeafKind"/> that this class can read.
-        /// </summary>
-        public static readonly TypeLeafKind[] Kinds = new TypeLeafKind[]
+        TypeLeafKind.LF_STRING_ID
+    };
+
+    /// <summary>
+    /// Gets the identifier.
+    /// </summary>
+    public TypeIndex Id { get; private set; }
+
+    /// <summary>
+    /// Gets the string.
+    /// </summary>
+    public StringReference String;
+
+    /// <summary>
+    /// Reads <see cref="StringIdRecord"/> from the stream.
+    /// </summary>
+    /// <param name="reader">Stream binary reader.</param>
+    /// <param name="kind">Type record kind.</param>
+    public static StringIdRecord Read(IBinaryReader reader, TypeLeafKind kind)
+    {
+        return new StringIdRecord
         {
-            TypeLeafKind.LF_STRING_ID
+            Kind = kind,
+            Id = TypeIndex.Read(reader),
+            String = reader.ReadCString(),
         };
-
-        /// <summary>
-        /// Gets the identifier.
-        /// </summary>
-        public TypeIndex Id { get; private set; }
-
-        /// <summary>
-        /// Gets the string.
-        /// </summary>
-        public StringReference String;
-
-        /// <summary>
-        /// Reads <see cref="StringIdRecord"/> from the stream.
-        /// </summary>
-        /// <param name="reader">Stream binary reader.</param>
-        /// <param name="kind">Type record kind.</param>
-        public static StringIdRecord Read(IBinaryReader reader, TypeLeafKind kind)
-        {
-            return new StringIdRecord
-            {
-                Kind = kind,
-                Id = TypeIndex.Read(reader),
-                String = reader.ReadCString(),
-            };
-        }
     }
 }
