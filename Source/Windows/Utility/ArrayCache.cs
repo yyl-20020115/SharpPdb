@@ -1,6 +1,4 @@
-﻿using SharpPdb.Windows.SymbolRecords;
-using SharpPdb.Windows.TypeRecords;
-using System;
+﻿using System;
 
 namespace SharpPdb.Windows.Utility;
 
@@ -10,7 +8,6 @@ public class ArrayCache<T>
     private bool v;
     private Func<int, T> f;
     private int length;
-
 
     public ArrayCache(int count, bool v, Func<int, T> f)
     {

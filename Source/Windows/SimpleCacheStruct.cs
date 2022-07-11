@@ -1,15 +1,14 @@
 ﻿using System.Collections.Generic;
 
-namespace SharpPdb.Windows
-{
-    public class SimpleCacheStruct<T>
-    {
-        public T Value { get; internal set; }
+namespace SharpPdb.Windows;
 
-        //public static SimpleCacheStruct<T> operator T(T value)
-        //{
-        //    return null;
-        //}
-            
-    }
+public class SimpleCacheStruct<T>
+{
+    public T Value { get; internal set; }
+
+    //public static SimpleCacheStruct<T> operator T(T value)
+    //{
+    //    return null;
+    //}
+
 }

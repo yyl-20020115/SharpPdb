@@ -3,116 +3,115 @@ using SharpPdb.Windows.Utility;
 using System;
 using System.Collections.Generic;
 
-namespace SharpPdb.Windows
+namespace SharpPdb.Windows;
+
+/// <summary>
+/// Represents debug subsection stream.
+/// </summary>
+public class DebugSubsectionStream
 {
     /// <summary>
-    /// Represents debug subsection stream.
+    /// List of all debug subsection references in this stream.
     /// </summary>
-    public class DebugSubsectionStream
+    private List<DebugSubsectionReference> references;
+
+    /// <summary>
+    /// Dictionary cache of debug subsections by its kind.
+    /// </summary>
+    private DictionaryCache<DebugSubsectionKind, DebugSubsection[]> debugSubsectionsByKind;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SymbolStream"/> class.
+    /// </summary>
+    /// <param name="reader">Binary reader.</param>
+    /// <param name="end">End of the symbol stream in binary reader. If it is less than 0 or bigger than binary reader length, it will be read fully.</param>
+    public DebugSubsectionStream(IBinaryReader reader, long end = -1)
     {
-        /// <summary>
-        /// List of all debug subsection references in this stream.
-        /// </summary>
-        private List<DebugSubsectionReference> references;
+        Reader = reader;
+        references = new List<DebugSubsectionReference>();
 
-        /// <summary>
-        /// Dictionary cache of debug subsections by its kind.
-        /// </summary>
-        private DictionaryCache<DebugSubsectionKind, DebugSubsection[]> debugSubsectionsByKind;
+        long position = reader.Position;
+        if (end < 0 || end > reader.Length)
+            end = reader.Length;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SymbolStream"/> class.
-        /// </summary>
-        /// <param name="reader">Binary reader.</param>
-        /// <param name="end">End of the symbol stream in binary reader. If it is less than 0 or bigger than binary reader length, it will be read fully.</param>
-        public DebugSubsectionStream(IBinaryReader reader, long end = -1)
+        while (position < end)
         {
-            Reader = reader;
-            references = new List<DebugSubsectionReference>();
+            DebugSubsectionKind kind = (DebugSubsectionKind)reader.ReadUint();
+            uint dataLen = reader.ReadUint();
 
-            long position = reader.Position;
-            if (end < 0 || end > reader.Length)
-                end = reader.Length;
-
-            while (position < end)
+            references.Add(new DebugSubsectionReference
             {
-                DebugSubsectionKind kind = (DebugSubsectionKind)reader.ReadUint();
-                uint dataLen = reader.ReadUint();
+                DataOffset = position + 8,
+                Kind = kind,
+                DataLen = dataLen,
+            });
+            position += dataLen + 8;
+            reader.Move(dataLen);
+        }
 
-                references.Add(new DebugSubsectionReference
-                {
-                    DataOffset = position + 8,
-                    Kind = kind,
-                    DataLen = dataLen,
-                });
-                position += dataLen + 8;
-                reader.Move(dataLen);
+        debugSubsectionsByKind = new DictionaryCache<DebugSubsectionKind, DebugSubsection[]>(
+            GetDebugSubsectionsByKind);
+    }
+
+    /// <summary>
+    /// Gets the stream binary reader.
+    /// </summary>
+    public IBinaryReader Reader { get; private set; }
+
+    /// <summary>
+    /// Gets the read-only list of all debug subsections references in this stream.
+    /// </summary>
+    public IReadOnlyList<DebugSubsectionReference> References => references;
+
+    /// <summary>
+    /// Indexing operator for getting all debug subsections of the given kind.
+    /// </summary>
+    /// <param name="kind">Debug subsection kind that should be parsed from this stream.</param>
+    /// <returns>Array of debug subsections for the specified debug subsection kind.</returns>
+    public DebugSubsection[] this[DebugSubsectionKind kind] => debugSubsectionsByKind[kind];
+
+    /// <summary>
+    /// Parses all debug subsections of the specified debug subsection kind.
+    /// </summary>
+    /// <param name="kind">Debug subsection kind.</param>
+    /// <returns>Array of debug subsections for the specified debug subsection kind.</returns>
+    private DebugSubsection[] GetDebugSubsectionsByKind(DebugSubsectionKind kind)
+    {
+        List<DebugSubsection> debugSubsections = new List<DebugSubsection>();
+
+        for (int i = 0; i < references.Count; i++)
+            if (references[i].Kind == kind)
+            {
+                DebugSubsection debugSubsection = GetDebugSubsection(i);
+
+                if (debugSubsection != null)
+                    debugSubsections.Add(debugSubsection);
             }
+        return debugSubsections.ToArray();
+    }
 
-            debugSubsectionsByKind = new DictionaryCache<DebugSubsectionKind, DebugSubsection[]>(
-                GetDebugSubsectionsByKind);
-        }
+    /// <summary>
+    /// Reads debug subsections from references for the specified index.
+    /// </summary>
+    /// <param name="index">Index of the debug subsection.</param>
+    private DebugSubsection GetDebugSubsection(int index)
+    {
+        // Since DictionaryCache is allowing only single thread to call this function, we don't need to lock reader here.
+        DebugSubsectionReference reference = references[index];
 
-        /// <summary>
-        /// Gets the stream binary reader.
-        /// </summary>
-        public IBinaryReader Reader { get; private set; }
-
-        /// <summary>
-        /// Gets the read-only list of all debug subsections references in this stream.
-        /// </summary>
-        public IReadOnlyList<DebugSubsectionReference> References => references;
-
-        /// <summary>
-        /// Indexing operator for getting all debug subsections of the given kind.
-        /// </summary>
-        /// <param name="kind">Debug subsection kind that should be parsed from this stream.</param>
-        /// <returns>Array of debug subsections for the specified debug subsection kind.</returns>
-        public DebugSubsection[] this[DebugSubsectionKind kind] => debugSubsectionsByKind[kind];
-
-        /// <summary>
-        /// Parses all debug subsections of the specified debug subsection kind.
-        /// </summary>
-        /// <param name="kind">Debug subsection kind.</param>
-        /// <returns>Array of debug subsections for the specified debug subsection kind.</returns>
-        private DebugSubsection[] GetDebugSubsectionsByKind(DebugSubsectionKind kind)
+        Reader.Position = reference.DataOffset;
+        switch (reference.Kind)
         {
-            List<DebugSubsection> debugSubsections = new List<DebugSubsection>();
-
-            for (int i = 0; i < references.Count; i++)
-                if (references[i].Kind == kind)
-                {
-                    DebugSubsection debugSubsection = GetDebugSubsection(i);
-
-                    if (debugSubsection != null)
-                        debugSubsections.Add(debugSubsection);
-                }
-            return debugSubsections.ToArray();
-        }
-
-        /// <summary>
-        /// Reads debug subsections from references for the specified index.
-        /// </summary>
-        /// <param name="index">Index of the debug subsection.</param>
-        private DebugSubsection GetDebugSubsection(int index)
-        {
-            // Since DictionaryCache is allowing only single thread to call this function, we don't need to lock reader here.
-            DebugSubsectionReference reference = references[index];
-
-            Reader.Position = reference.DataOffset;
-            switch (reference.Kind)
-            {
-                case DebugSubsectionKind.Lines:
-                    return LinesSubsection.Read(Reader, reference.Kind, reference.DataLen);
-                case DebugSubsectionKind.FileChecksums:
-                    return FileChecksumSubsection.Read(Reader, reference.Kind);
-                default:
+            case DebugSubsectionKind.Lines:
+                return LinesSubsection.Read(Reader, reference.Kind, reference.DataLen);
+            case DebugSubsectionKind.FileChecksums:
+                return FileChecksumSubsection.Read(Reader, reference.Kind);
+            default:
 #if DEBUG
-                    throw new NotImplementedException($"Unknown reference kind: {reference.Kind}");
+                throw new NotImplementedException($"Unknown reference kind: {reference.Kind}");
 #else
-                    return null;
+                return null;
 #endif
-            }
         }
     }
 }

@@ -1,12 +1,15 @@
-﻿namespace SharpPdb.Windows
-{
-    internal class MemoryLoadedFileReader : MemoryLoadedFile
-    {
-        private MemoryLoadedFile file;
+﻿namespace SharpPdb.Windows;
 
-        public MemoryLoadedFileReader(MemoryLoadedFile file)
-        {
-            this.file = file;
-        }
+public class MemoryLoadedFileReader : MemoryLoadedFile
+{
+    private MemoryLoadedFile file;
+    private string path;
+    public MemoryLoadedFileReader(MemoryLoadedFile file)
+    {
+        this.file = file;
+    }
+    public MemoryLoadedFileReader(string path)
+    {
+        this.path = path;
     }
 }

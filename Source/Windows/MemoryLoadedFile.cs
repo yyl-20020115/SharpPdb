@@ -1,19 +1,18 @@
 ﻿using System;
 
-namespace SharpPdb.Windows
+namespace SharpPdb.Windows;
+
+public class MemoryLoadedFile
 {
-    public class MemoryLoadedFile
+    private string path;
+
+    public MemoryLoadedFile(string path)
     {
-        private string path;
+        this.path = path;
+    }
 
-        public MemoryLoadedFile(string path)
-        {
-            this.path = path;
-        }
-
-        internal void Dispose()
-        {
-            throw new NotImplementedException();
-        }
+    internal void Dispose()
+    {
+        throw new NotImplementedException();
     }
 }

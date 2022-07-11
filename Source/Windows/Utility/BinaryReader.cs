@@ -1,11 +1,10 @@
-﻿//
-using System;
+﻿using System;
 
 namespace SharpPdb.Windows.Utility;
 
 public class BinaryReader : IBinaryReader
 {
-    public int Length => throw new NotImplementedException();
+    public long Length => throw new NotImplementedException();
 
     public long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
@@ -81,6 +80,11 @@ public class BinaryReader : IBinaryReader
         throw new NotImplementedException();
     }
 
+    public Guid ReadGuid()
+    {
+        throw new NotImplementedException();
+    }
+
     public int ReadInt()
     {
         throw new NotImplementedException();
@@ -101,6 +105,16 @@ public class BinaryReader : IBinaryReader
         throw new NotImplementedException();
     }
 
+    public IBinaryReader ReadSubstream(long hashLength)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IBinaryReader ReadSubstream()
+    {
+        throw new NotImplementedException();
+    }
+
     public uint ReadUint()
     {
         throw new NotImplementedException();
@@ -117,6 +131,11 @@ public class BinaryReader : IBinaryReader
     }
 
     public ushort ReadUshort()
+    {
+        throw new NotImplementedException();
+    }
+
+    public ushort[] ReadUshortArray(int modulesCount)
     {
         throw new NotImplementedException();
     }

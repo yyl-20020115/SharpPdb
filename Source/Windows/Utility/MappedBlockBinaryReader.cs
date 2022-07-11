@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace SharpPdb.Windows.Utility;
@@ -6,7 +7,7 @@ namespace SharpPdb.Windows.Utility;
 /// <summary>
 /// Represents <see cref="IBinaryReader"/> on top of the existing stream mapped with array of blocks of the same size.
 /// </summary>
-internal class MappedBlockBinaryReader : IBinaryReader
+public class MappedBlockBinaryReader : IBinaryReader
 {
     /// <summary>
     /// Current position in the stream.
@@ -101,7 +102,7 @@ internal class MappedBlockBinaryReader : IBinaryReader
         }
     }
 
-    int IBinaryReader.Length => throw new System.NotImplementedException();
+    long IBinaryReader.Length => throw new System.NotImplementedException();
 
     long IBinaryReader.Position { get; set; }
 
@@ -489,5 +490,25 @@ internal class MappedBlockBinaryReader : IBinaryReader
     public object ReadDecimal()
     {
         throw new System.NotImplementedException();
+    }
+
+    public IBinaryReader ReadSubstream(long hashLength)
+    {
+        throw new NotImplementedException();
+    }
+
+    public ushort[] ReadUshortArray(int modulesCount)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IBinaryReader ReadSubstream()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Guid ReadGuid()
+    {
+        throw new NotImplementedException();
     }
 }

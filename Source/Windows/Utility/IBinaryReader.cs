@@ -4,7 +4,7 @@ namespace SharpPdb.Windows.Utility;
 
 public interface IBinaryReader
 {
-    int Length { get; }
+    long Length { get; }
     long Position { get; set; }
     int BytesRemaining { get; }
 

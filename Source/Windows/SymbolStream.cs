@@ -3,292 +3,291 @@ using SharpPdb.Windows.Utility;
 using System;
 using System.Collections.Generic;
 
-namespace SharpPdb.Windows
+namespace SharpPdb.Windows;
+
+/// <summary>
+/// Represents PDB symbol stream.
+/// </summary>
+public class SymbolStream
 {
     /// <summary>
-    /// Represents PDB symbol stream.
+    /// List of all symbol references in this stream.
     /// </summary>
-    public class SymbolStream
+    private List<SymbolRecordReference> references;
+
+    /// <summary>
+    /// Array cache of symbols in this symbol stream.
+    /// </summary>
+    private ArrayCache<SymbolRecord> symbols;
+
+    /// <summary>
+    /// Dictionary cache of symbols by its kind.
+    /// </summary>
+    private DictionaryCache<SymbolRecordKind, SymbolRecord[]> symbolsByKind;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SymbolStream"/> class.
+    /// </summary>
+    /// <param name="stream">PDB symbol stream.</param>
+    public SymbolStream(PdbStream stream)
+        : this(stream.Reader)
     {
-        /// <summary>
-        /// List of all symbol references in this stream.
-        /// </summary>
-        private List<SymbolRecordReference> references;
+        Stream = stream;
+    }
 
-        /// <summary>
-        /// Array cache of symbols in this symbol stream.
-        /// </summary>
-        private ArrayCache<SymbolRecord> symbols;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SymbolStream"/> class.
+    /// </summary>
+    /// <param name="reader">Binary reader.</param>
+    /// <param name="end">End of the symbol stream in binary reader. If it is less than 0 or bigger than binary reader length, it will be read fully.</param>
+    public SymbolStream(IBinaryReader reader, long end = -1)
+    {
+        Reader = reader;
 
-        /// <summary>
-        /// Dictionary cache of symbols by its kind.
-        /// </summary>
-        private DictionaryCache<SymbolRecordKind, SymbolRecord[]> symbolsByKind;
+        long position = reader.Position;
+        if (end < 0 || end > reader.Length)
+            end = reader.Length;
+        long bytes = end - position;
+        int estimatedCapacity = (int)(bytes / 35);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SymbolStream"/> class.
-        /// </summary>
-        /// <param name="stream">PDB symbol stream.</param>
-        public SymbolStream(PdbStream stream)
-            : this(stream.Reader)
+        references = new List<SymbolRecordReference>(estimatedCapacity);
+        while (position < end)
         {
-            Stream = stream;
+            RecordPrefix prefix = RecordPrefix.Read(reader);
+
+            if (prefix.RecordLength < 2)
+                throw new Exception("CV corrupt record");
+
+            SymbolRecordKind kind = (SymbolRecordKind)prefix.RecordKind;
+            ushort dataLen = prefix.DataLen;
+
+            references.Add(new SymbolRecordReference
+            {
+                DataOffset = (uint)position + RecordPrefix.Size,
+                Kind = kind,
+                DataLen = dataLen,
+            });
+            position += dataLen + RecordPrefix.Size;
+            reader.Move(dataLen);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SymbolStream"/> class.
-        /// </summary>
-        /// <param name="reader">Binary reader.</param>
-        /// <param name="end">End of the symbol stream in binary reader. If it is less than 0 or bigger than binary reader length, it will be read fully.</param>
-        public SymbolStream(IBinaryReader reader, long end = -1)
+        symbolsByKind = new DictionaryCache<SymbolRecordKind, SymbolRecord[]>(GetSymbolsByKind);
+        symbols = new ArrayCache<SymbolRecord>(references.Count, GetSymbol);
+    }
+
+    /// <summary>
+    /// Gets the PDB stream.
+    /// </summary>
+    public PdbStream Stream { get; private set; }
+
+    /// <summary>
+    /// Gets the stream binary reader.
+    /// </summary>
+    public IBinaryReader Reader { get; private set; }
+
+    /// <summary>
+    /// Gets the read-only list of all symbol references in this stream.
+    /// </summary>
+    public IReadOnlyList<SymbolRecordReference> References => references;
+
+    /// <summary>
+    /// Indexing operator for getting symbol record at the given index.
+    /// </summary>
+    /// <param name="index">Index of the symbol record.</param>
+    /// <returns>Symbol record at the given index position.</returns>
+    public SymbolRecord this[int index] => symbols[index];
+
+    /// <summary>
+    /// Indexing operator for getting all symbols of the given kind.
+    /// </summary>
+    /// <param name="kind">Symbol record kind that should be parsed from this symbol stream.</param>
+    /// <returns>Array of symbol record for the specified symbol record kind.</returns>
+    public SymbolRecord[] this[SymbolRecordKind kind] => symbolsByKind[kind];
+
+    /// <summary>
+    /// Gets symbol record by offset in the binary reder stream.
+    /// </summary>
+    /// <param name="position">Position in the binary reader.</param>
+    /// <returns>Symbol record at the specified position.</returns>
+    public SymbolRecord GetSymbolRecordByOffset(long position)
+    {
+        if (TryGetSymbolRecordByOffset(position, out SymbolRecord symbolRecord))
+            return symbolRecord;
+        throw new KeyNotFoundException();
+    }
+
+    /// <summary>
+    /// Tries to get symbol record by offset in the binary reder stream.
+    /// </summary>
+    /// <param name="position">Position in the binary reader.</param>
+    /// <param name="symbolRecord">Symbol record at the specified position.</param>
+    /// <returns><c>true</c> if offset points to symbol record; <c>false</c> otherwise</returns>
+    public bool TryGetSymbolRecordByOffset(long position, out SymbolRecord symbolRecord)
+    {
+        int index = -1;
+        uint dataOffset = (uint)position + RecordPrefix.Size;
+
+        int min = 0, max = references.Count - 1;
+        while (min <= max)
         {
-            Reader = reader;
+            int mid = min + (max - min) / 2;
+            uint value = references[mid].DataOffset;
 
-            long position = reader.Position;
-            if (end < 0 || end > reader.Length)
-                end = reader.Length;
-            long bytes = end - position;
-            int estimatedCapacity = (int)(bytes / 35);
-
-            references = new List<SymbolRecordReference>(estimatedCapacity);
-            while (position < end)
+            if (value == dataOffset)
             {
-                RecordPrefix prefix = RecordPrefix.Read(reader);
-
-                if (prefix.RecordLength < 2)
-                    throw new Exception("CV corrupt record");
-
-                SymbolRecordKind kind = (SymbolRecordKind)prefix.RecordKind;
-                ushort dataLen = prefix.DataLen;
-
-                references.Add(new SymbolRecordReference
-                {
-                    DataOffset = (uint)position + RecordPrefix.Size,
-                    Kind = kind,
-                    DataLen = dataLen,
-                });
-                position += dataLen + RecordPrefix.Size;
-                reader.Move(dataLen);
+                index = mid;
+                break;
             }
-
-            symbolsByKind = new DictionaryCache<SymbolRecordKind, SymbolRecord[]>(GetSymbolsByKind);
-            symbols = new ArrayCache<SymbolRecord>(references.Count, GetSymbol);
+            else if (dataOffset < value)
+                max = mid - 1;
+            else
+                min = mid + 1;
         }
 
-        /// <summary>
-        /// Gets the PDB stream.
-        /// </summary>
-        public PdbStream Stream { get; private set; }
-
-        /// <summary>
-        /// Gets the stream binary reader.
-        /// </summary>
-        public IBinaryReader Reader { get; private set; }
-
-        /// <summary>
-        /// Gets the read-only list of all symbol references in this stream.
-        /// </summary>
-        public IReadOnlyList<SymbolRecordReference> References => references;
-
-        /// <summary>
-        /// Indexing operator for getting symbol record at the given index.
-        /// </summary>
-        /// <param name="index">Index of the symbol record.</param>
-        /// <returns>Symbol record at the given index position.</returns>
-        public SymbolRecord this[int index] => symbols[index];
-
-        /// <summary>
-        /// Indexing operator for getting all symbols of the given kind.
-        /// </summary>
-        /// <param name="kind">Symbol record kind that should be parsed from this symbol stream.</param>
-        /// <returns>Array of symbol record for the specified symbol record kind.</returns>
-        public SymbolRecord[] this[SymbolRecordKind kind] => symbolsByKind[kind];
-
-        /// <summary>
-        /// Gets symbol record by offset in the binary reder stream.
-        /// </summary>
-        /// <param name="position">Position in the binary reader.</param>
-        /// <returns>Symbol record at the specified position.</returns>
-        public SymbolRecord GetSymbolRecordByOffset(long position)
+        if (index >= 0)
         {
-            if (TryGetSymbolRecordByOffset(position, out SymbolRecord symbolRecord))
-                return symbolRecord;
-            throw new KeyNotFoundException();
+            symbolRecord = symbols[index];
+            return true;
         }
+        symbolRecord = null;
+        return false;
+    }
 
-        /// <summary>
-        /// Tries to get symbol record by offset in the binary reder stream.
-        /// </summary>
-        /// <param name="position">Position in the binary reader.</param>
-        /// <param name="symbolRecord">Symbol record at the specified position.</param>
-        /// <returns><c>true</c> if offset points to symbol record; <c>false</c> otherwise</returns>
-        public bool TryGetSymbolRecordByOffset(long position, out SymbolRecord symbolRecord)
-        {
-            int index = -1;
-            uint dataOffset = (uint)position + RecordPrefix.Size;
+    /// <summary>
+    /// Parses all symbols of the specified symbol record kind.
+    /// </summary>
+    /// <param name="kind">Symbol record kind.</param>
+    /// <returns>Array of symbol record for the specified symbol record kind.</returns>
+    private SymbolRecord[] GetSymbolsByKind(SymbolRecordKind kind)
+    {
+        List<SymbolRecord> symbols = new List<SymbolRecord>();
 
-            int min = 0, max = references.Count - 1;
-            while (min <= max)
+        for (int i = 0; i < references.Count; i++)
+            if (references[i].Kind == kind)
             {
-                int mid = min + (max - min) / 2;
-                uint value = references[mid].DataOffset;
+                SymbolRecord symbol = this.symbols[i];
 
-                if (value == dataOffset)
-                {
-                    index = mid;
-                    break;
-                }
-                else if (dataOffset < value)
-                    max = mid - 1;
-                else
-                    min = mid + 1;
+                if (symbol != null)
+                    symbols.Add(symbol);
             }
+        return symbols.ToArray();
+    }
 
-            if (index >= 0)
-            {
-                symbolRecord = symbols[index];
-                return true;
-            }
-            symbolRecord = null;
-            return false;
-        }
+    /// <summary>
+    /// Reads symbol record from symbol references for the specified index.
+    /// </summary>
+    /// <param name="index">Index of the symbol record.</param>
+    private SymbolRecord GetSymbol(int index)
+    {
+        // Since DictionaryCache is allowing only single thread to call this function, we don't need to lock reader here.
+        SymbolRecordReference reference = references[index];
 
-        /// <summary>
-        /// Parses all symbols of the specified symbol record kind.
-        /// </summary>
-        /// <param name="kind">Symbol record kind.</param>
-        /// <returns>Array of symbol record for the specified symbol record kind.</returns>
-        private SymbolRecord[] GetSymbolsByKind(SymbolRecordKind kind)
+        Reader.Position = reference.DataOffset;
+        switch (reference.Kind)
         {
-            List<SymbolRecord> symbols = new List<SymbolRecord>();
-
-            for (int i = 0; i < references.Count; i++)
-                if (references[i].Kind == kind)
-                {
-                    SymbolRecord symbol = this.symbols[i];
-
-                    if (symbol != null)
-                        symbols.Add(symbol);
-                }
-            return symbols.ToArray();
-        }
-
-        /// <summary>
-        /// Reads symbol record from symbol references for the specified index.
-        /// </summary>
-        /// <param name="index">Index of the symbol record.</param>
-        private SymbolRecord GetSymbol(int index)
-        {
-            // Since DictionaryCache is allowing only single thread to call this function, we don't need to lock reader here.
-            SymbolRecordReference reference = references[index];
-
-            Reader.Position = reference.DataOffset;
-            switch (reference.Kind)
-            {
-                case SymbolRecordKind.S_GPROC32:
-                case SymbolRecordKind.S_LPROC32:
-                case SymbolRecordKind.S_GPROC32_ID:
-                case SymbolRecordKind.S_LPROC32_ID:
-                case SymbolRecordKind.S_LPROC32_DPC:
-                case SymbolRecordKind.S_LPROC32_DPC_ID:
-                    return ProcedureSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_PUB32:
-                    return Public32Symbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_CONSTANT:
-                case SymbolRecordKind.S_MANCONSTANT:
-                    return ConstantSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_LDATA32:
-                case SymbolRecordKind.S_GDATA32:
-                case SymbolRecordKind.S_LMANDATA:
-                case SymbolRecordKind.S_GMANDATA:
-                    return DataSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_PROCREF:
-                case SymbolRecordKind.S_LPROCREF:
-                    return ProcedureReferenceSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_TOKENREF:
-                    return TokenReferenceSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_UDT:
-                case SymbolRecordKind.S_COBOLUDT:
-                    return UdtSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_LTHREAD32:
-                case SymbolRecordKind.S_GTHREAD32:
-                    return ThreadLocalDataSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_GMANPROC:
-                case SymbolRecordKind.S_LMANPROC:
-                    return ManagedProcedureSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_BLOCK32:
-                    return BlockSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_OEM:
-                    return OemSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                case SymbolRecordKind.S_UNAMESPACE:
-                    return NamespaceSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_MANSLOT:
-                    return AttributeSlotSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_END:
-                case SymbolRecordKind.S_INLINESITE_END:
-                    return EndSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_ANNOTATION:
-                    return AnnotationSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_ANNOTATIONREF:
-                    return AnnotationReferenceSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_REGREL32:
-                    return RegisterRelativeSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_OBJNAME:
-                    return ObjectNameSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_COMPILE2:
-                    return Compile2Symbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_COMPILE3:
-                    return Compile3Symbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_ENVBLOCK:
-                    return EnvironmentBlockSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_BUILDINFO:
-                    return BuildInfoSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_FRAMEPROC:
-                    return FrameProcedureSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_LABEL32:
-                    return LabelSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_HEAPALLOCSITE:
-                    return HeapAllocationSiteSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_CALLSITEINFO:
-                    return CallSiteInfoSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_FRAMECOOKIE:
-                    return FrameCookieSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_THUNK32:
-                    return Thunk32Symbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                case SymbolRecordKind.S_LOCAL:
-                    return LocalSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_DEFRANGE_REGISTER:
-                    return DefRangeRegisterSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                case SymbolRecordKind.S_DEFRANGE_REGISTER_REL:
-                    return DefRangeRegisterRelativeSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                case SymbolRecordKind.S_DEFRANGE_SUBFIELD_REGISTER:
-                    return DefRangeSubfieldRegisterSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                case SymbolRecordKind.S_DEFRANGE_FRAMEPOINTER_REL:
-                    return DefRangeFramePointerRelativeSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                case SymbolRecordKind.S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
-                    return DefRangeFramePointerRelativeFullScopeSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_CALLEES:
-                case SymbolRecordKind.S_CALLERS:
-                    return FunctionListSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                case SymbolRecordKind.S_FILESTATIC:
-                    return FileStaticSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_TRAMPOLINE:
-                    return TrampolineSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_SECTION:
-                    return SectionSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_COFFGROUP:
-                    return CoffGroupSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_EXPORT:
-                    return ExportSymbol.Read(Reader, this, index, reference.Kind);
-                case SymbolRecordKind.S_INLINESITE:
-                    return InlineSiteSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
-                default:
+            case SymbolRecordKind.S_GPROC32:
+            case SymbolRecordKind.S_LPROC32:
+            case SymbolRecordKind.S_GPROC32_ID:
+            case SymbolRecordKind.S_LPROC32_ID:
+            case SymbolRecordKind.S_LPROC32_DPC:
+            case SymbolRecordKind.S_LPROC32_DPC_ID:
+                return ProcedureSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_PUB32:
+                return Public32Symbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_CONSTANT:
+            case SymbolRecordKind.S_MANCONSTANT:
+                return ConstantSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_LDATA32:
+            case SymbolRecordKind.S_GDATA32:
+            case SymbolRecordKind.S_LMANDATA:
+            case SymbolRecordKind.S_GMANDATA:
+                return DataSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_PROCREF:
+            case SymbolRecordKind.S_LPROCREF:
+                return ProcedureReferenceSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_TOKENREF:
+                return TokenReferenceSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_UDT:
+            case SymbolRecordKind.S_COBOLUDT:
+                return UdtSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_LTHREAD32:
+            case SymbolRecordKind.S_GTHREAD32:
+                return ThreadLocalDataSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_GMANPROC:
+            case SymbolRecordKind.S_LMANPROC:
+                return ManagedProcedureSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_BLOCK32:
+                return BlockSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_OEM:
+                return OemSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            case SymbolRecordKind.S_UNAMESPACE:
+                return NamespaceSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_MANSLOT:
+                return AttributeSlotSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_END:
+            case SymbolRecordKind.S_INLINESITE_END:
+                return EndSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_ANNOTATION:
+                return AnnotationSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_ANNOTATIONREF:
+                return AnnotationReferenceSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_REGREL32:
+                return RegisterRelativeSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_OBJNAME:
+                return ObjectNameSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_COMPILE2:
+                return Compile2Symbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_COMPILE3:
+                return Compile3Symbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_ENVBLOCK:
+                return EnvironmentBlockSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_BUILDINFO:
+                return BuildInfoSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_FRAMEPROC:
+                return FrameProcedureSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_LABEL32:
+                return LabelSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_HEAPALLOCSITE:
+                return HeapAllocationSiteSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_CALLSITEINFO:
+                return CallSiteInfoSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_FRAMECOOKIE:
+                return FrameCookieSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_THUNK32:
+                return Thunk32Symbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            case SymbolRecordKind.S_LOCAL:
+                return LocalSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_DEFRANGE_REGISTER:
+                return DefRangeRegisterSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            case SymbolRecordKind.S_DEFRANGE_REGISTER_REL:
+                return DefRangeRegisterRelativeSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            case SymbolRecordKind.S_DEFRANGE_SUBFIELD_REGISTER:
+                return DefRangeSubfieldRegisterSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            case SymbolRecordKind.S_DEFRANGE_FRAMEPOINTER_REL:
+                return DefRangeFramePointerRelativeSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            case SymbolRecordKind.S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
+                return DefRangeFramePointerRelativeFullScopeSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_CALLEES:
+            case SymbolRecordKind.S_CALLERS:
+                return FunctionListSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            case SymbolRecordKind.S_FILESTATIC:
+                return FileStaticSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_TRAMPOLINE:
+                return TrampolineSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_SECTION:
+                return SectionSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_COFFGROUP:
+                return CoffGroupSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_EXPORT:
+                return ExportSymbol.Read(Reader, this, index, reference.Kind);
+            case SymbolRecordKind.S_INLINESITE:
+                return InlineSiteSymbol.Read(Reader, this, index, reference.Kind, reference.DataLen);
+            default:
 #if DEBUG
-                    throw new NotImplementedException($"Unknown reference kind: {reference.Kind}");
+                throw new NotImplementedException($"Unknown reference kind: {reference.Kind}");
 #else
-                    return null;
+                return null;
 #endif
-            }
         }
     }
 }
