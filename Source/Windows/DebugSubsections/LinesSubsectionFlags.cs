@@ -1,16 +1,15 @@
 ﻿using System;
 
-namespace SharpPdb.Windows.DebugSubsections
+namespace SharpPdb.Windows.DebugSubsections;
+
+/// <summary>
+/// Represents lines subsection flags (data present).
+/// </summary>
+[Flags]
+public enum LinesSubsectionFlags : ushort
 {
     /// <summary>
-    /// Represents lines subsection flags (data present).
+    /// Lines data contains columns information.
     /// </summary>
-    [Flags]
-    public enum LinesSubsectionFlags : ushort
-    {
-        /// <summary>
-        /// Lines data contains columns information.
-        /// </summary>
-        LinesHaveColumns = 0x0001,
-    }
+    LinesHaveColumns = 0x0001,
 }

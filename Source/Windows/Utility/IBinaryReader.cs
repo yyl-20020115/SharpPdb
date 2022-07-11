@@ -1,4 +1,6 @@
-﻿namespace SharpPdb.Windows.Utility;
+﻿using System;
+
+namespace SharpPdb.Windows.Utility;
 
 public interface IBinaryReader
 {
@@ -15,6 +17,7 @@ public interface IBinaryReader
     byte ReadByte();
     void Align(int v);
     IBinaryReader ReadSubstream(int hashLength);
+    IBinaryReader ReadSubstream(uint hashLength);
     void Move(ushort dataLen);
     IBinaryReader Duplicate();
     short ReadShort();
@@ -32,4 +35,5 @@ public interface IBinaryReader
     object ReadDecimal();
     ushort[] ReadUshortArray(int modulesCount);
     IBinaryReader ReadSubstream();
+    Guid ReadGuid();
 }

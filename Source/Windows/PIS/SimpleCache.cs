@@ -1,6 +1,6 @@
-﻿namespace SharpPdb.Windows.PIS
+﻿using System;
+using System.Collections.Generic;
+
+namespace SharpPdb.Windows.PIS
 {
-    internal class SimpleCache
-    {
-    }
 }

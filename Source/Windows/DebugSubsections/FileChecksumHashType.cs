@@ -1,10 +1,9 @@
 ﻿#pragma warning disable 1591
 
-namespace SharpPdb.Windows.DebugSubsections
+namespace SharpPdb.Windows.DebugSubsections;
+
+public enum FileChecksumHashType : byte
 {
-    public enum FileChecksumHashType : byte
-    {
-        None = 0,
-        MD5 = 1,
-    }
+    None = 0,
+    MD5 = 1,
 }
