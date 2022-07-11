@@ -10,4 +10,8 @@
     <Summary>Collection of .NET classes that read debug information from Windows PDB format.</Summary>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="PIS\SimpleCache.cs" />
+  </ItemGroup>
+
 </Project>
