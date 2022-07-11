@@ -1,4 +1,4 @@
-﻿using SharpUtilities;
+﻿
 using System.Collections.Generic;
 
 namespace SharpPdb.Windows.SymbolRecords

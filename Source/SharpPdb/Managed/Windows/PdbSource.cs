@@ -1,7 +1,7 @@
 ﻿using SharpPdb.Windows;
 using SharpPdb.Windows.DebugSubsections;
 using SharpPdb.Windows.Utility;
-using SharpUtilities;
+
 using System;
 
 namespace SharpPdb.Managed.Windows

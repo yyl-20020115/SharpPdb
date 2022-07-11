@@ -1,5 +1,5 @@
 ﻿using SharpPdb.Common.Tests;
-using SharpUtilities;
+
 using System;
 using System.Reflection;
 using Xunit;

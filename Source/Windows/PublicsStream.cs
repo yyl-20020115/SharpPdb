@@ -1,6 +1,6 @@
 ﻿using SharpPdb.Windows.GSI;
 using SharpPdb.Windows.SymbolRecords;
-using SharpUtilities;
+
 using System;
 using System.Collections.Generic;
 

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using SharpPdb.Windows.Utility;
+using System.Text;
 
 namespace SharpPdb.Windows.DBI;
 
@@ -90,7 +91,7 @@ public struct CoffSectionHeader
     /// Reads <see cref="CoffSectionHeader"/> from the stream.
     /// </summary>
     /// <param name="reader">Stream binary reader.</param>
-    public static CoffSectionHeader Read(BinaryReader reader)
+    public static CoffSectionHeader Read(IBinaryReader reader)
     {
         return new CoffSectionHeader
         {

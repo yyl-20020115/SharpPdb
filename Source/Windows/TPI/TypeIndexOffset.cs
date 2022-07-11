@@ -1,4 +1,4 @@
-﻿using SharpUtilities;
+﻿
 
 namespace SharpPdb.Windows.TPI
 {

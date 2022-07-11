@@ -1,5 +1,5 @@
 ﻿using SharpPdb.Windows.DBI;
-using SharpUtilities;
+
 
 namespace SharpPdb.Windows.SymbolRecords
 {

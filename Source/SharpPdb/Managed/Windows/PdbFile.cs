@@ -2,7 +2,7 @@
 using SharpPdb.Windows.DBI;
 using SharpPdb.Windows.DebugSubsections;
 using SharpPdb.Windows.SymbolRecords;
-using SharpUtilities;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

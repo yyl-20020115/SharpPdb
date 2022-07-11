@@ -1,12 +1,11 @@
-﻿namespace SharpPdb.Windows.Utility
-{
-    public class MemoryBuffer
-    {
-        public MemoryBuffer(byte[] bytes)
-        {
-            Bytes = bytes;
-        }
+﻿namespace SharpPdb.Windows.Utility;
 
-        public byte[] Bytes { get; internal set; }
+public class MemoryBuffer
+{
+    public MemoryBuffer(byte[] bytes)
+    {
+        Bytes = bytes;
     }
+
+    public byte[] Bytes { get; internal set; }
 }

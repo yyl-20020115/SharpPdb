@@ -1,6 +1,6 @@
 ﻿using SharpPdb.Windows;
 using SharpPdb.Windows.TypeRecords;
-using SharpUtilities;
+
 using System;
 
 namespace SharpPdb.Native.Types

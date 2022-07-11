@@ -1,181 +1,180 @@
-﻿using SharpUtilities;
+﻿using SharpPdb.Windows.Utility;
 using System;
 
-namespace SharpPdb.Windows.DBI
+namespace SharpPdb.Windows.DBI;
+
+/// <summary>
+/// DBI stream module description.
+/// </summary>
+public class DbiModuleDescriptor
 {
+    #region SimpleCache delegates
+    private Func<DbiModuleDescriptor, string[]> CallEnumerateFiles = (t) => t.EnumerateFiles();
+    private Func<DbiModuleDescriptor, PdbStream> CallEnumerateModuleStream = (t) => t.EnumerateModuleStream();
+    private Func<DbiModuleDescriptor, SymbolStream> CallEnumerateLocalSymbolStream = (t) => t.EnumerateLocalSymbolStream();
+    private Func<DbiModuleDescriptor, DebugSubsectionStream> CallEnumerateDebugSubsectionStream = (t) => t.EnumerateDebugSubsectionStream();
+    #endregion
+
     /// <summary>
-    /// DBI stream module description.
+    /// Cache of files compiled in this module.
     /// </summary>
-    public class DbiModuleDescriptor
+    private SimpleCacheWithContext<string[], DbiModuleDescriptor> filesCache;
+
+    /// <summary>
+    /// Cache of module stream.
+    /// </summary>
+    private SimpleCacheWithContext<PdbStream, DbiModuleDescriptor> moduleStreamCache;
+
+    /// <summary>
+    /// Cache of local symbol debug info stream.
+    /// </summary>
+    private SimpleCacheWithContext<SymbolStream, DbiModuleDescriptor> localSymbolStreamCache;
+
+    /// <summary>
+    /// Cache of debug subsection stream.
+    /// </summary>
+    private SimpleCacheWithContext<DebugSubsectionStream, DbiModuleDescriptor> debugSubsectionStreamCache;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbiModuleDescriptor"/> class.
+    /// </summary>
+    /// <param name="reader">Stream binary reader.</param>
+    /// <param name="moduleList">Owning module list.</param>
+    public DbiModuleDescriptor(IBinaryReader reader, DbiModuleList moduleList)
     {
-        #region SimpleCache delegates
-        private Func<DbiModuleDescriptor, string[]> CallEnumerateFiles = (t) => t.EnumerateFiles();
-        private Func<DbiModuleDescriptor, PdbStream> CallEnumerateModuleStream = (t) => t.EnumerateModuleStream();
-        private Func<DbiModuleDescriptor, SymbolStream> CallEnumerateLocalSymbolStream = (t) => t.EnumerateLocalSymbolStream();
-        private Func<DbiModuleDescriptor, DebugSubsectionStream> CallEnumerateDebugSubsectionStream = (t) => t.EnumerateDebugSubsectionStream();
-        #endregion
+        ModuleList = moduleList;
+        filesCache = SimpleCache.CreateWithContext(this, CallEnumerateFiles);
+        Header = ModuleInfoHeader.Read(reader);
+        ModuleName = reader.ReadCString();
+        ObjectFileName = reader.ReadCString();
 
-        /// <summary>
-        /// Cache of files compiled in this module.
-        /// </summary>
-        private SimpleCacheWithContext<string[], DbiModuleDescriptor> filesCache;
+        // Descriptors should be aligned at 4 bytes
+        if (reader.Position % 4 != 0)
+            reader.Position += 4 - reader.Position % 4;
 
-        /// <summary>
-        /// Cache of module stream.
-        /// </summary>
-        private SimpleCacheWithContext<PdbStream, DbiModuleDescriptor> moduleStreamCache;
+        // Higher level API initialization
+        moduleStreamCache = SimpleCache.CreateWithContext(this, CallEnumerateModuleStream);
+        localSymbolStreamCache = SimpleCache.CreateWithContext(this, CallEnumerateLocalSymbolStream);
+        debugSubsectionStreamCache = SimpleCache.CreateWithContext(this, CallEnumerateDebugSubsectionStream);
+    }
 
-        /// <summary>
-        /// Cache of local symbol debug info stream.
-        /// </summary>
-        private SimpleCacheWithContext<SymbolStream, DbiModuleDescriptor> localSymbolStreamCache;
+    /// <summary>
+    /// Gets owning module list.
+    /// </summary>
+    public DbiModuleList ModuleList { get; private set; }
 
-        /// <summary>
-        /// Cache of debug subsection stream.
-        /// </summary>
-        private SimpleCacheWithContext<DebugSubsectionStream, DbiModuleDescriptor> debugSubsectionStreamCache;
+    /// <summary>
+    /// Gets first file index from owning module list files array that is compiled into this module.
+    /// </summary>
+    public int StartingFileIndex { get; internal set; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DbiModuleDescriptor"/> class.
-        /// </summary>
-        /// <param name="reader">Stream binary reader.</param>
-        /// <param name="moduleList">Owning module list.</param>
-        public DbiModuleDescriptor(IBinaryReader reader, DbiModuleList moduleList)
-        {
-            ModuleList = moduleList;
-            filesCache = SimpleCache.CreateWithContext(this, CallEnumerateFiles);
-            Header = ModuleInfoHeader.Read(reader);
-            ModuleName = reader.ReadCString();
-            ObjectFileName = reader.ReadCString();
+    /// <summary>
+    /// Gets the header of this module descriptor.
+    /// </summary>
+    public ModuleInfoHeader Header { get; private set; }
 
-            // Descriptors should be aligned at 4 bytes
-            if (reader.Position % 4 != 0)
-                reader.Position += 4 - reader.Position % 4;
+    /// <summary>
+    /// The module name. This is usually either a full path to an object file (either directly passed to link.exe or from an archive)
+    /// or a string of the form Import:&lt;dll name&gt;.
+    /// </summary>
+    public StringReference ModuleName;
 
-            // Higher level API initialization
-            moduleStreamCache = SimpleCache.CreateWithContext(this, CallEnumerateModuleStream);
-            localSymbolStreamCache = SimpleCache.CreateWithContext(this, CallEnumerateLocalSymbolStream);
-            debugSubsectionStreamCache = SimpleCache.CreateWithContext(this, CallEnumerateDebugSubsectionStream);
-        }
+    /// <summary>
+    /// The object file name. In the case of an module that is linked directly passed to link.exe, this is the same as <see cref="ModuleName"/>.
+    /// In the case of a module that comes from an archive, this is usually the full path to the archive.
+    /// </summary>
+    public StringReference ObjectFileName;
 
-        /// <summary>
-        /// Gets owning module list.
-        /// </summary>
-        public DbiModuleList ModuleList { get; private set; }
+    /// <summary>
+    /// Gets all files compiled into this module.
+    /// </summary>
+    public string[] Files => filesCache.Value;
 
-        /// <summary>
-        /// Gets first file index from owning module list files array that is compiled into this module.
-        /// </summary>
-        public int StartingFileIndex { get; internal set; }
+    /// <summary>
+    /// Gets the module stream.
+    /// </summary>
+    public PdbStream ModuleStream => moduleStreamCache.Value;
 
-        /// <summary>
-        /// Gets the header of this module descriptor.
-        /// </summary>
-        public ModuleInfoHeader Header { get; private set; }
+    /// <summary>
+    /// Gets the local symbol debug info stream.
+    /// </summary>
+    public SymbolStream LocalSymbolStream => localSymbolStreamCache.Value;
 
-        /// <summary>
-        /// The module name. This is usually either a full path to an object file (either directly passed to link.exe or from an archive)
-        /// or a string of the form Import:&lt;dll name&gt;.
-        /// </summary>
-        public StringReference ModuleName;
+    /// <summary>
+    /// Gets the debug subsection stream.
+    /// </summary>
+    public DebugSubsectionStream DebugSubsectionStream => debugSubsectionStreamCache.Value;
 
-        /// <summary>
-        /// The object file name. In the case of an module that is linked directly passed to link.exe, this is the same as <see cref="ModuleName"/>.
-        /// In the case of a module that comes from an archive, this is usually the full path to the archive.
-        /// </summary>
-        public StringReference ObjectFileName;
+    #region Header data
+    /// <summary>
+    /// Stream index of module debug info.
+    /// </summary>
+    public ushort ModuleStreamIndex => Header.ModuleStreamIndex;
 
-        /// <summary>
-        /// Gets all files compiled into this module.
-        /// </summary>
-        public string[] Files => filesCache.Value;
+    /// <summary>
+    /// Size of local symbol debug info in above stream
+    /// </summary>
+    public uint SymbolDebugInfoByteSize => Header.SymbolDebugInfoByteSize;
 
-        /// <summary>
-        /// Gets the module stream.
-        /// </summary>
-        public PdbStream ModuleStream => moduleStreamCache.Value;
+    /// <summary>
+    /// Size of C11 line number info in above stream
+    /// </summary>
+    public uint C11LineInfoByteSize => Header.C11LineInfoByteSize;
 
-        /// <summary>
-        /// Gets the local symbol debug info stream.
-        /// </summary>
-        public SymbolStream LocalSymbolStream => localSymbolStreamCache.Value;
+    /// <summary>
+    /// Size of C13 line number info in above stream
+    /// </summary>
+    public uint C13LineInfoByteSize => Header.C13LineInfoByteSize;
 
-        /// <summary>
-        /// Gets the debug subsection stream.
-        /// </summary>
-        public DebugSubsectionStream DebugSubsectionStream => debugSubsectionStreamCache.Value;
+    /// <summary>
+    /// Number of files contributing to this module
+    /// </summary>
+    public uint NumberOfFiles => Header.NumberOfFiles;
 
-        #region Header data
-        /// <summary>
-        /// Stream index of module debug info.
-        /// </summary>
-        public ushort ModuleStreamIndex => Header.ModuleStreamIndex;
+    /// <summary>
+    /// Name Index for source file name.
+    /// </summary>
+    public uint SourceFileNameIndex => Header.SourceFileNameIndex;
 
-        /// <summary>
-        /// Size of local symbol debug info in above stream
-        /// </summary>
-        public uint SymbolDebugInfoByteSize => Header.SymbolDebugInfoByteSize;
+    /// <summary>
+    /// Name Index for path to compiler PDB.
+    /// </summary>
+    public uint PdbFilePathNameIndex => Header.PdbFilePathNameIndex;
+    #endregion
 
-        /// <summary>
-        /// Size of C11 line number info in above stream
-        /// </summary>
-        public uint C11LineInfoByteSize => Header.C11LineInfoByteSize;
+    private string[] EnumerateFiles()
+    {
+        string[] files = new string[NumberOfFiles];
 
-        /// <summary>
-        /// Size of C13 line number info in above stream
-        /// </summary>
-        public uint C13LineInfoByteSize => Header.C13LineInfoByteSize;
+        for (int i = 0; i < files.Length; i++)
+            files[i] = ModuleList.GetFileName(i + StartingFileIndex);
+        return files;
+    }
 
-        /// <summary>
-        /// Number of files contributing to this module
-        /// </summary>
-        public uint NumberOfFiles => Header.NumberOfFiles;
+    private PdbStream EnumerateModuleStream()
+    {
+        return ModuleList.DbiStream.Stream.File.GetStream(ModuleStreamIndex);
+    }
 
-        /// <summary>
-        /// Name Index for source file name.
-        /// </summary>
-        public uint SourceFileNameIndex => Header.SourceFileNameIndex;
+    private SymbolStream EnumerateLocalSymbolStream()
+    {
+        IBinaryReader sreader = ModuleStream?.Reader?.Duplicate();
 
-        /// <summary>
-        /// Name Index for path to compiler PDB.
-        /// </summary>
-        public uint PdbFilePathNameIndex => Header.PdbFilePathNameIndex;
-        #endregion
+        if (sreader == null)
+            return null;
+        sreader.Position = 0;
+        int signature = sreader.ReadInt();
 
-        private string[] EnumerateFiles()
-        {
-            string[] files = new string[NumberOfFiles];
+        if (signature != 4)
+            throw new System.Exception("Invalid signature of module stream");
+        return new SymbolStream(sreader, SymbolDebugInfoByteSize);
+    }
 
-            for (int i = 0; i < files.Length; i++)
-                files[i] = ModuleList.GetFileName(i + StartingFileIndex);
-            return files;
-        }
+    private DebugSubsectionStream EnumerateDebugSubsectionStream()
+    {
+        IBinaryReader sreader = ModuleStream.Reader.Duplicate();
+        sreader.Position = SymbolDebugInfoByteSize + C11LineInfoByteSize;
 
-        private PdbStream EnumerateModuleStream()
-        {
-            return ModuleList.DbiStream.Stream.File.GetStream(ModuleStreamIndex);
-        }
-
-        private SymbolStream EnumerateLocalSymbolStream()
-        {
-            IBinaryReader sreader = ModuleStream?.Reader?.Duplicate();
-
-            if (sreader == null)
-                return null;
-            sreader.Position = 0;
-            int signature = sreader.ReadInt();
-
-            if (signature != 4)
-                throw new System.Exception("Invalid signature of module stream");
-            return new SymbolStream(sreader, SymbolDebugInfoByteSize);
-        }
-
-        private DebugSubsectionStream EnumerateDebugSubsectionStream()
-        {
-            IBinaryReader sreader = ModuleStream.Reader.Duplicate();
-            sreader.Position = SymbolDebugInfoByteSize + C11LineInfoByteSize;
-
-            return new DebugSubsectionStream(sreader.ReadSubstream(C13LineInfoByteSize));
-        }
+        return new DebugSubsectionStream(sreader.ReadSubstream(C13LineInfoByteSize));
     }
 }

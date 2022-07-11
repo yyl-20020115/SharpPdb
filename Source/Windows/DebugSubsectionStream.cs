@@ -1,5 +1,5 @@
 ﻿using SharpPdb.Windows.DebugSubsections;
-using SharpUtilities;
+using SharpPdb.Windows.Utility;
 using System;
 using System.Collections.Generic;
 
@@ -49,7 +49,8 @@ namespace SharpPdb.Windows
                 reader.Move(dataLen);
             }
 
-            debugSubsectionsByKind = new DictionaryCache<DebugSubsectionKind, DebugSubsection[]>(GetDebugSubsectionsByKind);
+            debugSubsectionsByKind = new DictionaryCache<DebugSubsectionKind, DebugSubsection[]>(
+                GetDebugSubsectionsByKind);
         }
 
         /// <summary>

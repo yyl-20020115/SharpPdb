@@ -1,4 +1,6 @@
-﻿namespace SharpPdb.Windows.DBI;
+﻿using SharpPdb.Windows.Utility;
+
+namespace SharpPdb.Windows.DBI;
 
 /// <summary>
 /// DBI Build number value extractor structure.
