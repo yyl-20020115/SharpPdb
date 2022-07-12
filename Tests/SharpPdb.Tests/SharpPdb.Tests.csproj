@@ -10,8 +10,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Native\DiaTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="$(EnlistmentRoot)Tests\SharpPdb.Common.Tests\SharpPdb.Common.Tests.csproj" />
     <ProjectReference Include="$(EnlistmentRoot)Source\SharpPdb\SharpPdb.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Native\" />
   </ItemGroup>
 
 </Project>

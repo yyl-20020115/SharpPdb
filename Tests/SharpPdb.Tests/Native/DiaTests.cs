@@ -1,4 +1,5 @@
 ﻿using DIA;
+using Dia2Lib;
 using SharpPdb.Common.Tests;
 using SharpPdb.Native.Types;
 using SharpPdb.Windows;

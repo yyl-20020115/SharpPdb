@@ -10,6 +10,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="E2E\DiaTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DiaSymReader" Version="1.4.0" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="$(EnlistmentRoot)Tests\SharpPdb.Common.Tests\SharpPdb.Common.Tests.csproj" />
     <ProjectReference Include="$(EnlistmentRoot)Source\Windows\SharpPdb.Windows.csproj" />
   </ItemGroup>
